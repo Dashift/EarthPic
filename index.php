@@ -11,6 +11,7 @@ class getEarthPic
     function __construct($d)
     {
         $this->d=$d;    
+        $this->latest_url=$this->getLatest();
         $this->run();
     }
 
@@ -34,26 +35,21 @@ class getEarthPic
         return "http://himawari8-dl.nict.go.jp/himawari8/img/D531106/".$this->d."d/550/".$str_1."/".$str_2;
     }
 
-    /**
-    * @param $d 
-    *
-    */
-    public function getPics()
-    {   
+
+
+    public function sendRequests()
+    {
         $d=$this->d;
         for ($x=0; $x < $d; $x++) { 
             for ($y=0; $y < $d; $y++) { 
                 $url=$this->latest_url."_".$x."_".$y.".png";
-                $ch=curl_init();
-                curl_setopt($ch, CURLOPT_URL, $url);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                $img=curl_exec($ch);
-                curl_close($ch);
                 $filename="./img/".$x."_".$y.".png";
-                $fp=fopen($filename, 'w');
-                fwrite($fp, $img);
-                fclose($fp);
+                $pool[]=new PicSpyder($url,$filename);
             }
+        }
+        foreach($pool as $worker){
+           if($worker->start())
+               $worker->join();
         }
     }
 
@@ -77,13 +73,48 @@ class getEarthPic
 
     public function run()
     {
-        $this->latest_url=$this->getLatest();
-        $this->getPics();
+        $this->sendRequests();
         $this->combine();
     }
 
 }
 
-$pic=new getEarthPic(8);
+/**
+* Get pics by threads
+*/
+class PicSpyder extends Thread
+{
+    private $url;
+    private $filename;
 
-?>
+    function __construct($url,$filename)
+    {
+        $this->url=$url;
+        $this->filename=$filename;
+    }
+
+    public function run()
+    {
+        $this->curlGetPics($this->url,$this->filename);
+    }
+
+    /**
+    *Get file and store 
+    *@param $url ,$filename
+    */
+    public function curlGetPics($url,$filename)
+    {       
+        $ch=curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $img=curl_exec($ch);
+        curl_close($ch);    
+        $fp=fopen($filename, 'w');
+        fwrite($fp, $img);
+        fclose($fp);
+    }
+}
+
+$pic=new getEarthPic(4);
+
+ ?>
