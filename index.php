@@ -7,10 +7,12 @@ class getEarthPic
 {
     private $d=0;
     private $latest_url;
+    private $imgPath;
 
     function __construct($d)
     {
-        $this->d=$d;    
+        $this->d=$d;
+        $this->imgPath=dirname(__FILE__)."/img/";
         $this->latest_url=$this->getLatest();
         $this->run();
     }
@@ -43,13 +45,15 @@ class getEarthPic
         for ($x=0; $x < $d; $x++) { 
             for ($y=0; $y < $d; $y++) { 
                 $url=$this->latest_url."_".$x."_".$y.".png";
-                $filename="./img/".$x."_".$y.".png";
+                $filename=$this->imgPath.$x."_".$y.".png";
                 $pool[]=new PicSpyder($url,$filename);
             }
         }
         foreach($pool as $worker){
-           if($worker->start())
-               $worker->join();
+            $worker->start();
+        }
+        foreach($pool as $worker){
+            $worker->join();
         }
     }
 
@@ -103,12 +107,12 @@ class PicSpyder extends Thread
     *@param $url ,$filename
     */
     public function curlGetPics($url,$filename)
-    {       
+    {
         $ch=curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $img=curl_exec($ch);
-        curl_close($ch);    
+        curl_close($ch);
         $fp=fopen($filename, 'w');
         fwrite($fp, $img);
         fclose($fp);
