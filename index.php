@@ -113,12 +113,16 @@ class PicSpyder extends Thread
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $img=curl_exec($ch);
         curl_close($ch);
-        $fp=fopen($filename, 'w');
+        $fp=fopen($filename,'w');
         fwrite($fp, $img);
         fclose($fp);
     }
 }
 
+/**
+ *getEarthPic(int $d)
+ * @param $d How many pieces in x axis and y axis, x=y=$d
+ */
 $pic=new getEarthPic(4);
 
  ?>
